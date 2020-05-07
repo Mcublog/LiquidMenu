@@ -1,3 +1,8 @@
+/**
+@file
+Contains the LiquidMenu class definition.
+*/
+
 /*
 The MIT License (MIT)
 
@@ -22,11 +27,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/**
-@file
-Contains the LiquidMenu class definition.
-*/
-
 #include "LiquidMenu.h"
 #include "glyphs.h"
 
@@ -35,6 +35,11 @@ const uint8_t DIVISION_LINE_LENGTH = 40; ///< Sets the length of the division li
 LiquidMenu::LiquidMenu(DisplayClass &liquidCrystal, uint8_t startingScreen)
   : _p_liquidCrystal(&liquidCrystal), _screenCount(0),
     _currentScreen(startingScreen - 1) {
+#ifndef I2C
+  _p_liquidCrystal->createChar(15, glyph::rightFocus);
+  _p_liquidCrystal->createChar(14, glyph::leftFocus);
+  _p_liquidCrystal->createChar(13, glyph::customFocus);
+#endif
 }
 
 LiquidMenu::LiquidMenu(DisplayClass &liquidCrystal, LiquidScreen &liquidScreen,
@@ -155,6 +160,11 @@ bool LiquidMenu::change_screen(LiquidScreen &p_liquidScreen) {
   return false;
 }
 
+uint8_t LiquidMenu::get_current_screen() {
+  return (_currentScreen + 1);
+}
+
+
 bool LiquidMenu::operator=(uint8_t number) {
   return change_screen(number);
 }
@@ -212,10 +222,6 @@ bool LiquidMenu::set_focusSymbol(Position position, uint8_t symbol[8]) {
   return true;
 }
 
-bool LiquidMenu::is_callable(uint8_t number) const {
-  return _p_liquidScreen[_currentScreen]->is_callable(number);
-}
-
 bool LiquidMenu::call_function(uint8_t number) const {
   bool returnValue = _p_liquidScreen[_currentScreen]->call_function(number);
   update();
@@ -228,21 +234,6 @@ void LiquidMenu::update() const {
 }
 
 void LiquidMenu::softUpdate() const {
-  /* TEMPORARY FIX!
-   * Calls methods on the `DisplayClass` object only after it is
-   * initialized. This makes it compatible with different
-   * "LiquidCrystal" libraries and doesn't break the current API.
-   * Will be removed for version 2.0.0 when `LiquidMenu::init()` will
-   * become mandatory.
-   */
-  static bool firstRun = true;
-  if (firstRun) {
-    firstRun = false;
-    _p_liquidCrystal->createChar(15, glyph::rightFocus);
-    _p_liquidCrystal->createChar(14, glyph::leftFocus);
-    _p_liquidCrystal->createChar(13, glyph::customFocus);
-  }
-
   DEBUGLN(F("Updating the LCD"));
   for (uint8_t b = 0; b < DIVISION_LINE_LENGTH; b++) {
     DEBUG(F("-"));
